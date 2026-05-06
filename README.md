@@ -1,34 +1,55 @@
-# EE 541 - Homework 5
+# MNIST Binary Logistic Regression (from scratch)
 
-**Mengjia Shang** | USC ID: 7338151449
+A NumPy-only implementation of logistic regression that learns to detect the
+digit **"2"** against all other MNIST digits. The model, gradient descent
+loop, regularization (none, L2, L1), and evaluation metrics are all written
+without any ML framework — the notebook reads as the spec for what those
+frameworks do under the hood.
 
-## Problem 1: Logistic Regression Binary Classifier
+## What's inside
 
-Implementation of a logistic regression classifier from scratch to detect the digit "2" in the MNIST dataset.
+- **Custom data pipeline** — MNIST loaded from HDF5, recast as a 1-vs-all
+  binary task ("2" → 1, otherwise → 0).
+- **Numerically stable sigmoid + log-loss** — uses the
+  `log(1 + exp(-|z|))` reformulation to avoid overflow.
+- **Training** — full-batch gradient descent with three runs:
+  unregularized, L2, and L1.
+- **Learning-rate selection** — sweep over `{0.01, 0.1, 0.5, 1.0}` with
+  loss curves to motivate the chosen LR.
+- **Diagnostics** — train/validation learning curves, 28×28 weight maps
+  (which highlight the strokes the model relies on), and held-out
+  accuracy / precision / recall / F1.
 
-### Repository Structure
+## Layout
 
 ```
-README.md
-q1/
-  q1.ipynb         # Jupyter notebook with code and analysis
-  q1.pdf           # Writeup with answers to all questions
-  weights.h5       # Trained model weights (w: 784-vector, b: scalar)
-  mnist_data.h5    # MNIST dataset in HDF5 format
-  requirements.txt # Python dependencies
+notebook/
+  binary_logistic_regression.ipynb   # full implementation + analysis
+  weights.h5                         # trained weights (w: 784-vec, b: scalar)
+  requirements.txt                   # numpy, h5py, matplotlib, jupyter
 ```
 
-### Setup
+The MNIST HDF5 file (`mnist_data.h5`) is not committed — point the loader
+at any standard MNIST HDF5 dump, or adapt the first cells to read the
+binary IDX files instead.
+
+## Running
 
 ```bash
-pip install -r q1/requirements.txt
+pip install -r notebook/requirements.txt
+jupyter notebook notebook/binary_logistic_regression.ipynb
 ```
 
-### Running
+## Headline numbers (test set, 10 000 samples)
 
-Open `q1/q1.ipynb` in Jupyter and run all cells. The notebook will:
-1. Load and preprocess the MNIST data
-2. Train logistic regression models with no regularization, L2, and L1
-3. Generate plots comparing learning rates, learning curves, and weight visualizations
-4. Evaluate and report test metrics (accuracy, precision, recall, F1)
-5. Save the trained weights to `weights.h5`
+| Variant | Accuracy | Precision | Recall | F1 |
+|---|---:|---:|---:|---:|
+| No regularization | 0.9810 | 0.9626 | 0.8488 | 0.9022 |
+| L2 | 0.9782 | 0.9678 | 0.8159 | 0.8854 |
+| L1 | 0.9756 | 0.9690 | 0.7888 | 0.8697 |
+
+The class is imbalanced (≈10% positive), so accuracy alone is generous —
+F1 is the more honest metric. The 28×28 weight visualization shows the
+model relying on the curved upper stroke of "2" with negative activation
+in empty corners, the kind of pattern a single linear boundary can
+recover.
